@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'inventario:home' %}">Inicio</a></li>
+            <li class="breadcrumb-item active">Checkout</li>
+        </ol>
+    </nav>
+
+    <h1 class="display-6 fw-bold text-primary mb-4">
+        <i class="fas fa-shopping-cart"></i> Finalizar Compra
+    </h1>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <form id="checkoutForm">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-user"></i> Datos Personales</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Nombre Completo *</label>
+                                <input type="text" class="form-control" name="nombre" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">RUT *</label>
+                                <input type="text" class="form-control" name="rut" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Email *</label>
+                                <input type="email" class="form-control" name="email" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Teléfono *</label>
+                                <input type="tel" class="form-control" name="telefono" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-map-marker-alt"></i> Dirección de Entrega</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label class="form-label">Dirección *</label>
+                                <input type="text" class="form-control" name="direccion" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Comuna *</label>
+                                <select class="form-select" name="comuna" required>
+                                    <option value="">Selecciona comuna</option>
+                                    <option value="las-condes">Las Condes</option>
+                                    <option value="providencia">Providencia</option>
+                                    <option value="vitacura">Vitacura</option>
+                                    <option value="santiago">Santiago Centro</option>
+                                    <option value="nunoa">Ñuñoa</option>
+                                    <option value="la-reina">La Reina</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-credit-card"></i> Método de Pago</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="radio" name="pago" value="tarjeta" checked>
+                            <label class="form-check-label">
+                                <i class="fas fa-credit-card"></i> Tarjeta de Crédito/Débito
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="pago" value="transferencia">
+                            <label class="form-check-label">
+                                <i class="fas fa-university"></i> Transferencia Bancaria
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card sticky-top" style="top: 100px;">
+                <div class="card-header bg-primary text-white">
+                    <h5><i class="fas fa-receipt"></i> Resumen del Pedido</h5>
+                </div>
+                <div class="card-body">
+                    <div id="resumenProductos">
+                        <!-- Los productos se cargan con JavaScript -->
+                    </div>
+
+                    <hr>
+
+                    <div class="d-flex justify-content-between">
+                        <span>Subtotal:</span>
+                        <span id="subtotal">$0</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Envío:</span>
+                        <span id="envio">$3.990</span>
+                    </div>
+
+                    <hr>
+
+                    <div class="d-flex justify-content-between fs-4 fw-bold">
+                        <span>Total:</span>
+                        <span id="total" class="text-primary">$0</span>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button class="btn btn-primary btn-lg" onclick="procesarPedido()">
+                            <i class="fas fa-lock"></i> Realizar Pedido
+                        </button>
+                        <a href="{% url 'inventario:catalogo' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Seguir Comprando
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Obtener carrito actualizado al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    const carrito = JSON.parse(localStorage.getItem('carritoElixir')) || [];
+
+    if (carrito.length === 0) {
+        window.location.href = '{% url "inventario:catalogo" %}';
+        return;
+    }
+
+    mostrarResumenPedido(carrito);
+});
+
+function mostrarResumenPedido(carrito) {
+    const contenedor = document.getElementById('resumenProductos');
+    let subtotal = 0;
+
+    contenedor.innerHTML = carrito.map(item => {
+        const itemTotal = item.precio * item.cantidad;
+        subtotal += itemTotal;
+        return `
+            <div class="d-flex justify-content-between mb-3">
+                <div>
+                    <div class="fw-bold">${item.nombre}</div>
+                    <small class="text-muted">Cantidad: ${item.cantidad}</small>
+                </div>
+                <div class="text-end">
+                    <div>$${itemTotal.toLocaleString()}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    const envio = subtotal >= 25000 ? 0 : 3990;
+    const total = subtotal + envio;
+
+    document.getElementById('subtotal').textContent = '$' + subtotal.toLocaleString();
+    document.getElementById('envio').textContent = envio === 0 ? 'GRATIS' : '$' + envio.toLocaleString();
+    document.getElementById('total').textContent = '$' + total.toLocaleString();
+}
+
+function procesarPedido() {
+    const form = document.getElementById('checkoutForm');
+    if (form.checkValidity()) {
+        const numeroOrden = 'ELX-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+        alert('¡Pedido confirmado!\nNúmero de orden: ' + numeroOrden);
+        localStorage.setItem('carritoElixir', JSON.stringify([]));
+        window.location.href = '{% url "inventario:home" %}';
+    } else {
+        form.reportValidity();
+    }
+}
+</script>
+{% endblock %}

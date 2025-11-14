@@ -1,0 +1,272 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Catálogo - Elixir{% endblock %}
+
+{% block content %}
+<!-- El contenido específico del catálogo que antes estaba declarado completo dentro del HTML -->
+
+<!-- <h1>Catálogo de productos</h1>  <-- eliminar / comentar esta línea -->
+
+<!-- Aquí puedes incluir el resto del contenido estático o dinámico -->
+
+<!-- Por ejemplo, si usas React, pon el div raíz -->
+<div id="catalogo-react-root"></div>
+
+<!-- ----------------
+   Aquí continúa todo el HTML del catálogo (cards, filtros, etc.)
+   NO incluir scripts aquí: los movemos a extra_scripts.
+   ---------------- -->
+
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold text-primary">
+                <i class="fas fa-th-large"></i> Catálogo de Productos
+            </h1>
+            <p class="lead text-muted">Descubre nuestra selección premium</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-3 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-filter"></i> Filtros</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get">
+                        <div class="mb-3">
+                            <label class="form-label">Buscar</label>
+                            <input type="text" class="form-control" name="q"
+                                   value="{{ filtros_activos.busqueda|default:'' }}"
+                                   placeholder="Buscar productos...">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Categoría</label>
+                            <select class="form-select" name="categoria">
+                                <option value="">Todas las categorías</option>
+                                {% for categoria in categorias %}
+                                <option value="{{ categoria.id }}"
+                                        {% if filtros_activos.categoria == categoria.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ categoria.nombre }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100">
+                            Aplicar Filtros
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-9">
+            <div class="row g-4">
+                {% for producto in productos %}
+                <div class="col-lg-4 col-md-6">
+                    <div class="card h-100">
+                        <div class="position-relative">
+                            {% if producto.imagenes.all %}
+                                <img src="{{ producto.imagenes.all.0.imagen.url }}" 
+                                     class="card-img-top" 
+                                     alt="{{ producto.nombre }}" 
+                                     style="height: 250px; object-fit: cover;">
+                            {% elif producto.imagen %}
+                                <img src="{{ producto.imagen.url }}" 
+                                     class="card-img-top" 
+                                     alt="{{ producto.nombre }}" 
+                                     style="height: 250px; object-fit: cover;">
+                            {% else %}
+                                <div class="bg-light d-flex align-items-center justify-content-center" 
+                                     style="height: 250px;">
+                                    <i class="fas fa-wine-bottle fa-3x text-muted"></i>
+                                </div>
+                            {% endif %}
+                            
+                            {% if producto.stock_bajo %}
+                            <span class="badge bg-danger position-absolute top-0 end-0 m-2">
+                                Stock Bajo
+                            </span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="card-body d-flex flex-column">
+                            <div class="d-flex justify-content-between mb-2">
+                                <small class="text-muted">{{ producto.categoria.nombre }}</small>
+                                <small class="badge bg-secondary">{{ producto.sku }}</small>
+                            </div>
+                            
+                            <h6 class="card-title">{{ producto.nombre }}</h6>
+                            <p class="card-text text-muted small flex-grow-1">
+                                {{ producto.descripcion|truncatechars:100 }}
+                            </p>
+                            
+                            <div class="mt-auto">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="precio">${{ producto.precio|floatformat:0 }}</span>
+                                    <small class="text-muted">Stock: {{ producto.stock }}</small>
+                                </div>
+                                
+                                <div class="btn-group w-100">
+                                    <button class="btn btn-primary btn-agregar-catalogo" 
+                                            data-id="{{ producto.id }}"
+                                            data-nombre="{{ producto.nombre|escapejs }}"
+                                            data-precio="{{ producto.precio|default:0|escapejs }}"
+                                            data-categoria="{{ producto.categoria.nombre|escapejs }}"
+                                            data-imagen="{% if producto.imagenes.all %}{{ producto.imagenes.all.0.imagen.url|escapejs }}{% elif producto.imagen %}{{ producto.imagen.url|escapejs }}{% endif %}"
+                                            {% if producto.stock == 0 %} disabled{% endif %}>
+                                        {% if producto.stock == 0 %}Sin Stock{% else %}Agregar{% endif %}
+                                    </button>
+                                    <a href="{% url 'inventario:detalle_producto' producto.id %}" 
+                                       class="btn btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </div>
+                                
+                                {% if producto.imagenes.all|length > 1 %}
+                                <div class="mt-3">
+                                    <div class="row g-1">
+                                        {% for foto in producto.imagenes.all %}
+                                        <div class="col-3">
+                                            <img src="{{ foto.imagen.url }}"
+                                                 class="img-fluid rounded thumbnail-img"
+                                                 alt="Vista {{ forloop.counter }}"
+                                                 onclick="mostrarPreview('{{ foto.imagen.url }}')"
+                                                 style="height: 50px; object-fit: cover; cursor: pointer;">
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12 text-center py-5">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h5>No se encontraron productos</h5>
+                    <p class="text-muted">Intenta con otros filtros.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<!-- Cargar el bundle de React al final del body -->
+<script src="{% static 'js/catalogo.bundle.js' %}" defer></script>
+
+<!-- Pasar datos iniciales -->
+<script>
+    window.initialData = {{ productos_json|safe }};
+</script>
+
+<!-- Scripts inline del catálogo (agregar al carrito, previews, swap imágenes, contador) -->
+<script>
+    function agregarProductoCatalogo(id, nombre, precio, categoria, imagen) {
+        const idNum = parseInt(id, 10) || id;
+        const precioNum = parseFloat(String(precio).replace(',', '.')) || 0;
+
+        const producto = { id: idNum, nombre, precio: precioNum, categoria, imagen, cantidad: 1 };
+        let carrito = JSON.parse(localStorage.getItem('carritoElixir')) || [];
+        const existe = carrito.find(item => item.id === producto.id);
+
+        if (existe) {
+            existe.cantidad += 1;
+        } else {
+            carrito.push(producto);
+        }
+
+        localStorage.setItem('carritoElixir', JSON.stringify(carrito));
+        actualizarContadorForzado();
+        alert('¡' + nombre + ' agregado al carrito!');
+    }
+
+    function actualizarContadorForzado() {
+        const carrito = JSON.parse(localStorage.getItem('carritoElixir')) || [];
+        const cantidad = carrito.reduce((sum, item) => sum + item.cantidad, 0);
+
+        if (typeof actualizarContadorCarrito === 'function') {
+            actualizarContadorCarrito();
+        }
+        if (typeof window.actualizarContadorCarrito === 'function') {
+            window.actualizarContadorCarrito();
+        }
+
+        setTimeout(() => {
+            const selectores = [
+                '#cart-count', '.cart-count', '#carritoCount', '.carritoCount',
+                '#carrito-count', '.carrito-count', '#contador-carrito', '.contador-carrito',
+                '.badge', '[data-carrito]', '[id*="carrito"]', '[class*="carrito"]',
+                '.navbar .badge', '.nav .badge'
+            ];
+            selectores.forEach(selector => {
+                try {
+                    document.querySelectorAll(selector).forEach(el => {
+                        el.textContent = cantidad;
+                        el.style.display = cantidad > 0 ? 'inline-block' : 'none';
+                    });
+                } catch {}
+            });
+            const navbar = document.querySelector('.navbar, .nav, header');
+            if (navbar) {
+                navbar.querySelectorAll('.badge, span[class*="count"]').forEach(b => {
+                    b.textContent = cantidad;
+                    b.style.display = cantidad > 0 ? 'inline-block' : 'none';
+                });
+            }
+        }, 100);
+    }
+
+    function mostrarPreview(url) {
+        const modal = document.createElement('div');
+        modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);display:flex;justify-content:center;align-items:center;cursor:pointer;z-index:1000;';
+        const img = document.createElement('img');
+        img.src = url;
+        img.style.cssText = 'max-width:80%;max-height:80%;border-radius:8px;';
+        modal.appendChild(img);
+        document.body.appendChild(modal);
+        modal.onclick = () => modal.remove();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.btn-agregar-catalogo').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (btn.disabled) return;
+                agregarProductoCatalogo(
+                    btn.dataset.id,
+                    btn.dataset.nombre,
+                    btn.dataset.precio,
+                    btn.dataset.categoria,
+                    btn.dataset.imagen
+                );
+            });
+        });
+
+        // swap imagen principal por thumbnails
+        document.querySelectorAll('.card .position-relative').forEach(function(wrapper) {
+            const thumbnails = wrapper.parentElement.querySelectorAll('.thumbnail-img');
+            if (thumbnails.length === 0) return;
+            const mainImg = wrapper.querySelector('img.card-img-top');
+            if (!mainImg) return;
+            thumbnails.forEach(function(thumb) {
+                thumb.addEventListener('click', function() {
+                    mainImg.src = thumb.src;
+                });
+            });
+        });
+
+        actualizarContadorForzado();
+    });
+</script>
+{% endblock %}
+
+

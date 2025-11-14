@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Elixir - Botillería Premium{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Aquí van tus variables y estilos globales */
+        :root {
+            --primary-color: #1a365d;
+            --secondary-color: #d69e2e;
+            --accent-color: #2d3748;
+            --light-bg: #f7fafc;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-bg);
+        }
+        
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        /* Evitar que el navbar sticky cubra el contenido */
+        main {
+            padding-top: 80px; /* ajustar según la altura real del navbar */
+        }
+
+        .hero-section {
+            padding: 3.5rem 0; /* reducir o aumentar según diseño */
+            background: #f8fbfc; /* ejemplo suave */
+        }
+
+        .navbar-brand {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--secondary-color) !important;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .nav-link {
+            color: white !important;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        
+        .nav-link:hover {
+            color: var(--secondary-color) !important;
+        }
+        
+        .btn-primary {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            font-weight: 600;
+        }
+        
+        .btn-primary:hover {
+            background-color: #b7791f;
+            border-color: #b7791f;
+            transform: translateY(-2px);
+            transition: all 0.3s ease;
+        }
+        
+        .card {
+            border: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .precio {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
+        
+        .hero-section {
+            background: linear-gradient(rgba(26, 54, 93, 0.8), rgba(45, 55, 72, 0.8)), url('https://images.unsplash.com/photo-1569529465841-dfecdab7503b?ixlib=rb-4.0.3') center/cover;
+            color: white;
+            padding: 100px 0;
+            text-align: center;
+        }
+        
+        /* Estilos del carrito */
+        .cart-badge {
+            background-color: var(--secondary-color);
+            color: white;
+            border-radius: 50%;
+            padding: 2px 8px;
+            font-size: 0.75rem;
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            min-width: 20px;
+            text-align: center;
+        }
+        
+        .cart-item {
+            border-bottom: 1px solid #eee;
+            padding: 15px 0;
+        }
+        
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+        
+        .quantity-controls {
+            width: 100px;
+        }
+        
+        .quantity-controls input {
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+        
+        .quantity-controls button {
+            border: 1px solid #ddd;
+            background: white;
+            width: 32px;
+            height: 32px;
+        }
+        
+        .quantity-controls button:hover {
+            background: #f8f9fa;
+        }
+        
+        .age-verification {
+            background: rgba(0,0,0,0.9);
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .age-modal {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 500px;
+            margin: 20px;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9998;
+            max-width: 350px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .checkout-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .total-section {
+            background: var(--primary-color);
+            color: white;
+            border-radius: 15px;
+            padding: 25px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Verificación de Edad -->
+    <div id="ageVerification" class="age-verification" style="display: none;">
+        <div class="age-modal">
+            <i class="fas fa-id-card fa-4x text-primary mb-3"></i>
+            <h3 class="mb-3">Verificación de Edad</h3>
+            <p class="mb-4">Este sitio web contiene productos alcohólicos. Para continuar navegando, debes confirmar que eres mayor de 18 años.</p>
+            <p class="text-muted small mb-4">El consumo de alcohol en exceso es dañino para la salud. Venta responsable.</p>
+            <div class="d-grid gap-2">
+                <button class="btn btn-primary btn-lg" onclick="confirmarEdad()">
+                    <i class="fas fa-check"></i> Soy mayor de 18 años
+                </button>
+                <button class="btn btn-secondary" onclick="rechazarEdad()">
+                    <i class="fas fa-times"></i> Soy menor de edad
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'inventario:home' %}">
+                <i class="fas fa-wine-bottle"></i> Elixir
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'inventario:home' %}">
+                            <i class="fas fa-home"></i> Inicio
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'inventario:catalogo' %}">
+                            <i class="fas fa-th-large"></i> Catálogo
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-list"></i> Categorías
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'inventario:catalogo' %}?categoria=1">🍷 Vinos</a></li>
+                            <li><a class="dropdown-item" href="{% url 'inventario:catalogo' %}?categoria=2">🍺 Cervezas</a></li>
+                            <li><a class="dropdown-item" href="{% url 'inventario:catalogo' %}?categoria=3">🥃 Piscos</a></li>
+                            <li><a class="dropdown-item" href="{% url 'inventario:catalogo' %}?categoria=4">🥃 Whiskys</a></li>
+                            <li><a class="dropdown-item" href="{% url 'inventario:catalogo' %}?categoria=5">🍹 Ron</a></li>
+                        </ul>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <!-- Carrito -->
+                    <li class="nav-item">
+                        <a class="nav-link position-relative" href="#" onclick="mostrarCarrito()" id="cartButton">
+                            <i class="fas fa-shopping-cart"></i> Carrito
+                            <span class="cart-badge" id="cartCount">0</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/">
+                            <i class="fas fa-user-shield"></i> Admin
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenido Principal -->
+    <main>
+      {% block content %}
+      {% endblock %}
+    </main>
+
+    <!-- Modal del Carrito -->
+    <div class="modal fade" id="cartModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-shopping-cart text-primary"></i> Tu Carrito de Compras
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="cartContent">
+                    <!-- Contenido del carrito se carga aquí -->
+                </div>
+                <div class="modal-footer" id="cartFooter">
+                    <!-- Footer del carrito se carga aquí -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Checkout -->
+    <div class="modal fade" id="checkoutModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-credit-card text-primary"></i> Finalizar Compra
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="checkoutContent">
+                    <!-- Contenido del checkout se carga aquí -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-5 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5><i class="fas fa-wine-bottle text-warning"></i> Elixir</h5>
+                    <p>Tu botillería premium de confianza. Los mejores productos alcohólicos con garantía de calidad.</p>
+                    <div class="social-links">
+                        <a href="#" class="text-white me-3"><i class="fab fa-facebook"></i></a>
+                        <a href="#" class="text-white me-3"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-white"><i class="fab fa-whatsapp"></i></a>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <h5><i class="fas fa-map-marker-alt"></i> Contacto</h5>
+                    <p><i class="fas fa-home"></i> Av. Providencia 1234, Santiago</p>
+                    <p><i class="fas fa-phone"></i> +56 2 2345 6789</p>
+                    <p><i class="fas fa-envelope"></i> contacto@elixir.cl</p>
+                    <p><i class="fab fa-whatsapp"></i> WhatsApp: +56 9 8765 4321</p>
+                </div>
+                <div class="col-md-4">
+                    <h5><i class="fas fa-clock"></i> Horarios de Atención</h5>
+                    <p>Lunes a Viernes: 9:00 - 21:00</p>
+                    <p>Sábados: 9:00 - 20:00</p>
+                    <p>Domingos: 10:00 - 18:00</p>
+                    <p class="text-warning mt-3"><i class="fas fa-truck"></i> Despacho gratis sobre $25.000</p>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <p class="mb-0">&copy; 2025 Elixir - Botillería Premium. Todos los derechos reservados.</p>
+                    <p class="text-muted small">Consumo responsable - Solo para mayores de 18 años | RUT: 76.123.456-7</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts globales -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Sistema básico de carrito accesible globalmente
+        window.agregarAlCarrito = function(producto, cantidad = 1) {
+            try {
+                let carrito = JSON.parse(localStorage.getItem('carritoElixir')) || [];
+                const idNum = Number(producto.id);
+                const existe = carrito.find(p => Number(p.id) === idNum);
+                if (existe) {
+                    existe.cantidad = (existe.cantidad || 0) + cantidad;
+                } else {
+                    carrito.push(Object.assign({ cantidad }, producto));
+                }
+                localStorage.setItem('carritoElixir', JSON.stringify(carrito));
+                if (typeof actualizarContadorCarrito === 'function') actualizarContadorCarrito();
+            } catch(e) { console.error(e); }
+        };
+
+        window.actualizarContadorCarrito = function() {
+            const carrito = JSON.parse(localStorage.getItem('carritoElixir')) || [];
+            const total = carrito.reduce((s, i) => s + (i.cantidad || 0), 0);
+            document.querySelectorAll('.cart-count').forEach(el => {
+                el.textContent = total > 0 ? total : '';
+                el.style.display = total > 0 ? 'inline-block' : 'none';
+            });
+        };
+
+        // Inicializar contador al cargar
+        document.addEventListener('DOMContentLoaded', () => {
+            window.actualizarContadorCarrito();
+        });
+    </script>
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

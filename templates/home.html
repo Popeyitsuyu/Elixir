@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Inicio - Elixir{% endblock %}
+
+{% block content %}
+<section class="hero-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto text-center">
+                <h1 class="display-4 fw-bold mb-4">
+                    <i class="fas fa-wine-bottle"></i> Bienvenido a Elixir
+                </h1>
+                <p class="lead mb-4">Tu botillería premium de confianza. Los mejores vinos, cervezas y licores.</p>
+                <a href="{% url 'inventario:catalogo' %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-shopping-bag"></i> Ver Catálogo
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center mb-5">
+                <h2 class="display-6 fw-bold text-primary">Nuestras Categorías</h2>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            {% for categoria in categorias %}
+            <div class="col-lg-3 col-md-6">
+                <div class="card h-100 text-center">
+                    <div class="card-body">
+                        <div style="font-size: 3rem; margin-bottom: 15px;">
+                            {% if categoria.nombre == 'Vino' %}🍷{% elif categoria.nombre == 'Cerveza' %}🍺{% else %}🍾{% endif %}
+                        </div>
+                        <h5 class="card-title">
+                            {% if categoria.nombre == "Pisco" %}
+                                Piscos
+                            {% elif categoria.nombre == "Ron" %}
+                                Rones
+                            {% elif categoria.nombre == "Cerveza" %}
+                                Cervezas
+                            {% elif categoria.nombre == "Vino" %}
+                                Vinos
+                            {% else %}
+                                {{ categoria.nombre }}
+                            {% endif %}
+                        </h5>
+                        <p class="card-text">{{ categoria.descripcion }}</p>
+                        <a href="{% url 'inventario:catalogo' %}?categoria={{ categoria.id }}" class="btn btn-outline-primary">
+                            Ver Productos
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center mb-5">
+                <h2 class="display-6 fw-bold text-primary">Productos Destacados</h2>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            {% for producto in productos_destacados %}
+            <div class="col-lg-3 col-md-6">
+                <div class="card h-100">
+                    <div class="position-relative">
+                        {% if producto.imagen %}
+                            <img src="{{ producto.imagen.url }}" class="card-img-top" alt="{{ producto.nombre }}" style="height: 250px; object-fit: cover;">
+                        {% else %}
+                            <div class="bg-light d-flex align-items-center justify-content-center" style="height: 250px;">
+                                <i class="fas fa-wine-bottle fa-3x text-muted"></i>
+                            </div>
+                        {% endif %}
+                        {% if producto.stock_bajo %}
+                            <span class="badge bg-danger position-absolute top-0 end-0 m-2">Stock Bajo</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="card-body d-flex flex-column">
+                        <small class="text-muted">{{ producto.categoria.nombre }}</small>
+                        <h6 class="card-title">{{ producto.nombre }}</h6>
+                        <p class="card-text flex-grow-1">{{ producto.descripcion|truncatechars:80 }}</p>
+
+                        <div class="mt-auto">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="precio">${{ producto.precio|floatformat:0 }}</span>
+                                <small class="text-muted">Stock: {{ producto.stock }}</small>
+                            </div>
+
+                            <div class="btn-group w-100">
+                                <a href="{% url 'inventario:detalle_producto' producto.id %}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-eye"></i> Ver
+                                </a>
+                                <button
+                                    class="btn btn-primary btn-sm btn-agregar-home"
+                                    data-id="{{ producto.id }}"
+                                    data-nombre="{{ producto.nombre|escapejs }}"
+                                    data-precio="{{ producto.precio }}"
+                                    data-imagen="{% if producto.imagen %}{{ producto.imagen.url }}{% endif %}"
+                                    {% if producto.stock == 0 %}disabled{% endif %}>
+                                    <i class="fas fa-cart-plus"></i> Agregar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center">
+                <h5>No hay productos disponibles</h5>
+                <p class="text-muted">Agrega productos desde el panel de administración.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/home.bundle.js' %}" defer></script>
+
+<script>
+window.initialData = {
+    categorias: {{ categorias|default:'[]'|safe }},
+    destacados: {{ productos_destacados|default:'[]'|safe }}
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    function agregarLocal(producto, cantidad = 1) {
+        try {
+            let carrito = JSON.parse(localStorage.getItem('carritoElixir')) || [];
+            const idNum = Number(producto.id);
+            const existe = carrito.find(i => Number(i.id) === idNum);
+            if (existe) {
+                existe.cantidad = (existe.cantidad || 0) + cantidad;
+            } else {
+                carrito.push(Object.assign({ cantidad }, producto));
+            }
+            localStorage.setItem('carritoElixir', JSON.stringify(carrito));
+            if (typeof actualizarContadorCarrito === 'function') actualizarContadorCarrito();
+            alert('¡' + producto.nombre + ' agregado al carrito!');
+        } catch(e) {
+            console.error('Error al agregar al carrito', e);
+        }
+    }
+
+    document.querySelectorAll('.btn-agregar-home').forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (btn.disabled) return;
+            const p = {
+                id: btn.dataset.id,
+                nombre: btn.dataset.nombre,
+                precio: parseFloat(btn.dataset.precio) || 0,
+                imagen: btn.dataset.imagen || ''
+            };
+            if (typeof agregarAlCarrito === 'function') {
+                try { agregarAlCarrito(p, 1); return; } catch(e) {}
+            }
+            agregarLocal(p, 1);
+        });
+    });
+});
+</script>
+{% endblock %}

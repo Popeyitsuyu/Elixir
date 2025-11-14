@@ -1,0 +1,539 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'inventario:home' %}">Inicio</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'inventario:catalogo' %}">Catálogo</a></li>
+            <li class="breadcrumb-item active">{{ producto.nombre }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="sticky-top" style="top: 100px;">
+                <div class="card shadow-lg">
+                    <div class="position-relative">
+                        {% if producto.imagenes.all %}
+                            <img src="{{ producto.imagenes.all.0.imagen.url }}" class="card-img-top" alt="{{ producto.nombre }}" 
+                                 style="height: 500px; object-fit: cover; cursor: zoom-in;"
+                                 onclick="ampliarImagen(this)" id="imagenPrincipal">
+                        {% elif producto.imagen %}
+                            <img src="{{ producto.imagen.url }}" class="card-img-top" alt="{{ producto.nombre }}" 
+                                 style="height: 500px; object-fit: cover; cursor: zoom-in;"
+                                 onclick="ampliarImagen(this)" id="imagenPrincipal">
+                        {% else %}
+                            <div class="bg-light d-flex align-items-center justify-content-center" 
+                                 style="height: 500px;">
+                                <i class="fas fa-wine-bottle fa-5x text-muted"></i>
+                            </div>
+                        {% endif %}
+                        
+                        {% if producto.margen_ganancia > 25 %}
+                            <span class="badge bg-warning text-dark position-absolute top-0 start-0 m-3">
+                                <i class="fas fa-star"></i> Premium
+                            </span>
+                        {% endif %}
+                        
+                        {% if producto.stock_bajo %}
+                            <span class="badge bg-danger position-absolute top-0 end-0 m-3 pulse">
+                                <i class="fas fa-exclamation-triangle"></i> ¡Últimas {{ producto.stock }}!
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Galería de imágenes -->
+                {% if producto.imagenes.all %}
+                <div class="mt-3">
+                    <div class="row g-2">
+                        {% for foto in producto.imagenes.all %}
+                        <div class="col-3">
+                            <img src="{{ foto.imagen.url }}" 
+                                 class="img-fluid rounded border miniatura-img" 
+                                 alt="Vista {{ forloop.counter }}"
+                                 onclick="cambiarImagenPrincipal(this)"
+                                 style="height: 80px; object-fit: cover; cursor: pointer;">
+                        </div>
+                        {% empty %}
+                        <div class="col-3">
+                            <div class="bg-light rounded border d-flex align-items-center justify-content-center" style="height: 80px;">
+                                <small class="text-muted">Vista 360°</small>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="bg-light rounded border d-flex align-items-center justify-content-center" style="height: 80px;">
+                                <small class="text-muted">Detalle</small>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="bg-light rounded border d-flex align-items-center justify-content-center" style="height: 80px;">
+                                <small class="text-muted">Etiqueta</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% elif producto.imagen %}
+                <div class="mt-3">
+                    <div class="row g-2">
+                        <div class="col-3">
+                            <img src="{{ producto.imagen.url }}" class="img-fluid rounded border" alt="Vista 1">
+                        </div>
+                        <div class="col-3">
+                            <div class="bg-light rounded border d-flex align-items-center justify-content-center" style="height: 80px;">
+                                <small class="text-muted">Vista 360°</small>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="bg-light rounded border d-flex align-items-center justify-content-center" style="height: 80px;">
+                                <small class="text-muted">Detalle</small>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="bg-light rounded border d-flex align-items-center justify-content-center" style="height: 80px;">
+                                <small class="text-muted">Etiqueta</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="mb-3">
+                <span class="badge bg-primary fs-6">{{ producto.categoria.nombre }}</span>
+                <span class="badge bg-secondary ms-2">SKU: {{ producto.sku }}</span>
+                {% if producto.stock_bajo %}
+                    <span class="badge bg-danger ms-2 pulse">
+                        <i class="fas fa-exclamation-triangle"></i> Stock Bajo
+                    </span>
+                {% endif %}
+            </div>
+            
+            <h1 class="display-6 fw-bold text-primary mb-3">{{ producto.nombre }}</h1>
+            
+            <!-- Rating simulado -->
+            <div class="mb-3">
+                <div class="d-flex align-items-center">
+                    <div class="text-warning me-2">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star-half-alt"></i>
+                    </div>
+                    <span class="text-muted">(4.8) · 127 reseñas</span>
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <div class="d-flex align-items-center mb-3">
+                    <span class="precio display-4 me-3">${{ producto.precio|floatformat:0 }}</span>
+                    {% if producto.margen_ganancia > 0 %}
+                        <span class="badge bg-success fs-6">{{ producto.margen_ganancia }}% margen</span>
+                    {% endif %}
+                </div>
+                <div class="d-flex flex-wrap gap-2 text-muted small">
+                    <span><i class="fas fa-check-circle text-success"></i> Precio incluye IVA</span>
+                    <span><i class="fas fa-truck text-info"></i> Envío gratis sobre $25.000</span>
+                    <span><i class="fas fa-shield-alt text-primary"></i> Compra protegida</span>
+                </div>
+            </div>
+
+            {% if producto.descripcion %}
+            <div class="mb-4">
+                <h5><i class="fas fa-info-circle text-primary"></i> Descripción</h5>
+                <p class="lead">{{ producto.descripcion }}</p>
+                
+                <!-- Características adicionales -->
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-certificate text-warning"></i> Producto original</li>
+                            <li><i class="fas fa-leaf text-success"></i> Calidad premium</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-medal text-primary"></i> Marca reconocida</li>
+                            <li><i class="fas fa-thumbs-up text-success"></i> Recomendado</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card bg-light border-0">
+                        <div class="card-body">
+                            <h6><i class="fas fa-warehouse text-primary"></i> Disponibilidad</h6>
+                            <div class="d-flex align-items-center">
+                            {% if producto.stock > 10 %}
+                                    <span class="badge bg-success me-2">
+                                        <i class="fas fa-check-circle"></i> En Stock
+                                    </span>
+                                    <span class="fw-bold">{{ producto.stock }} unidades disponibles</span>
+                                {% elif producto.stock > 0 %}
+                                    <span class="badge bg-warning me-2">
+                                        <i class="fas fa-exclamation-triangle"></i> Pocas unidades
+                                    </span>
+                                    <span class="fw-bold text-warning">Solo quedan {{ producto.stock }}</span>
+                                {% else %}
+                                    <span class="badge bg-danger me-2">
+                                        <i class="fas fa-times-circle"></i> Agotado
+                                    </span>
+                                    <span class="text-danger fw-bold">Sin stock</span>
+                                {% endif %}
+                            </div>
+                            {% if producto.stock %}
+                                {% if producto.stock <= 5 %}
+                                    <div class="progress mt-2" style="height: 6px; --stock: {{ producto.stock }};">
+                                        <div class="progress-bar bg-warning" style="width: calc(var(--stock) * 20%);"></div>
+                                    </div>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card bg-light border-0">
+                        <div class="card-body">
+                            <h6><i class="fas fa-truck text-info"></i> Entrega</h6>
+                            <div class="small">
+                                <p class="mb-1">
+                                    <i class="fas fa-clock text-success"></i> 
+                                    <strong>Santiago:</strong> Entrega hoy si pides antes de las 15:00
+                                </p>
+                                <p class="mb-0">
+                                    <i class="fas fa-map-marker-alt text-info"></i> 
+                                    <strong>Regiones:</strong> 24-48 horas hábiles
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controles de Cantidad y Compra -->
+            {% if producto.stock > 0 %}
+            <div class="mb-4">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Cantidad:</label>
+                        <div class="input-group">
+                            <button class="btn btn-outline-secondary" type="button" onclick="cambiarCantidad(-1)" id="btnMenos">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <input type="number" class="form-control text-center fw-bold" value="1" min="1" max="{{ producto.stock }}" id="cantidadProducto">
+                            <button class="btn btn-outline-secondary" type="button" onclick="cambiarCantidad(1)" id="btnMas">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <small class="text-muted">Máximo {{ producto.stock }} unidades</small>
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label fw-bold">Acciones:</label>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-primary btn-lg" onclick="comprarAhoraDetalle()" id="btnComprar">
+                                <i class="fas fa-bolt"></i> Comprar Ahora - <span id="precioTotal">${{ producto.precio|floatformat:0 }}</span>
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="agregarAlCarritoDetalle()" id="btnAgregar">
+                                <i class="fas fa-cart-plus"></i> Agregar al Carrito
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Botones adicionales -->
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <button class="btn btn-outline-secondary w-100" onclick="agregarAFavoritos()">
+                            <i class="fas fa-heart"></i> Favoritos
+                        </button>
+                    </div>
+                    <div class="col-md-6">
+                        <button class="btn btn-outline-secondary w-100" onclick="compartirProducto()">
+                            <i class="fas fa-share-alt"></i> Compartir
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-danger border-0 shadow-sm">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                    <div>
+                        <h6 class="mb-1">Producto Agotado</h6>
+                        <p class="mb-0">¿Quieres que te notifiquemos cuando esté disponible?</p>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <button class="btn btn-warning">
+                        <i class="fas fa-bell"></i> Notificarme cuando esté disponible
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Información Adicional -->
+            <div class="card bg-primary text-white border-0 shadow">
+                <div class="card-body">
+                    <h6><i class="fas fa-shield-alt"></i> Garantías y Beneficios Elixir</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="list-unstyled mb-0 small">
+                                <li><i class="fas fa-check text-warning"></i> Productos 100% originales</li>
+                                <li><i class="fas fa-check text-warning"></i> Garantía de satisfacción</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-unstyled mb-0 small">
+                                <li><i class="fas fa-check text-warning"></i> Atención personalizada</li>
+                                <li><i class="fas fa-check text-warning"></i> Devolución sin costo</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Proveedor info -->
+            <div class="mt-3">
+                <small class="text-muted">
+                    <i class="fas fa-store"></i> Vendido y despachado por: 
+                    <strong>{{ producto.proveedor.nombre }}</strong>
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Productos Relacionados -->
+    {% if productos_relacionados %}
+    <section class="mt-5 pt-5 border-top">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h3 class="fw-bold text-primary mb-2">
+                    <i class="fas fa-thumbs-up"></i> También te puede interesar
+                </h3>
+                <p class="text-muted">Productos relacionados seleccionados especialmente para ti</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'inventario:catalogo' %}?categoria={{ producto.categoria.id }}" class="btn btn-outline-primary">
+                    Ver más de {{ producto.categoria.nombre }}
+                </a>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            {% for producto_rel in productos_relacionados %}
+            <div class="col-lg-3 col-md-6">
+                <div class="card h-100 producto-card">
+                    <div class="position-relative">
+                        {% if producto_rel.imagenes.all %}
+                            <img src="{{ producto_rel.imagenes.all.0.imagen.url }}" class="card-img-top" 
+                                 alt="{{ producto_rel.nombre }}" style="height: 200px; object-fit: cover;">
+                        {% elif producto_rel.imagen %}
+                            <img src="{{ producto_rel.imagen.url }}" class="card-img-top" 
+                                 alt="{{ producto_rel.nombre }}" style="height: 200px; object-fit: cover;">
+                        {% else %}
+                            <div class="bg-light d-flex align-items-center justify-content-center" 
+                                 style="height: 200px;">
+                                <i class="fas fa-wine-bottle fa-2x text-muted"></i>
+                            </div>
+                        {% endif %}
+                        
+                        {% if producto_rel.stock_bajo %}
+                            <span class="badge bg-warning text-dark position-absolute top-0 end-0 m-2">¡Últimas!</span>
+                        {% endif %}
+                        
+                        <!-- Quick view button -->
+                        <div class="position-absolute top-0 start-0 m-2">
+                            <button type="button" class="btn btn-sm btn-light rounded-circle" onclick="quickView('{{ producto_rel.id }}')" title="Vista rápida">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body d-flex flex-column">
+                        <small class="text-muted">{{ producto_rel.categoria.nombre }}</small>
+                        <h6 class="card-title">{{ producto_rel.nombre|truncatechars:50 }}</h6>
+                        
+                        <!-- Rating simulado -->
+                        <div class="text-warning small mb-2">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="far fa-star"></i>
+                            <span class="text-muted">(4.0)</span>
+                        </div>
+                        
+                        <div class="mt-auto">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="fw-bold text-primary fs-5">${{ producto_rel.precio|floatformat:0 }}</span>
+                                <small class="text-muted">Stock: {{ producto_rel.stock }}</small>
+                            </div>
+                            
+                            <div class="btn-group w-100">
+                                <a href="{% url 'inventario:detalle_producto' producto_rel.id %}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-eye"></i> Ver
+                                </a>
+                                <button class="btn btn-primary btn-sm" 
+                                        data-producto-id="{{ producto_rel.id }}"
+                                        onclick="agregarProductoRelacionado(this.dataset.productoId)"
+                                        {% if producto_rel.stock == 0 %}disabled{% endif %}>
+                                    {% if producto_rel.stock == 0 %}
+                                        <i class="fas fa-ban"></i> Agotado
+                                    {% else %}
+                                        <i class="fas fa-cart-plus"></i> Agregar
+                                    {% endif %}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/detalle.bundle.js' %}" defer></script>
+
+<script>
+window.initialData = {
+    producto: {
+        id: {{ producto.id|default:'null' }},
+        nombre: "{{ producto.nombre|escapejs }}",
+        precio: {{ producto.precio|default:0 }},
+        categoria: "{{ producto.categoria.nombre|default:''|escapejs }}",
+        imagen: "{% if producto.imagenes.all %}{{ producto.imagenes.all.0.imagen.url }}{% elif producto.imagen %}{{ producto.imagen.url }}{% else %}{% endif %}",
+        stock: {{ producto.stock|default:0 }}
+    },
+    relacionados: {{ productos_relacionados|default:"[]"|safe }}
+};
+</script>
+
+<script>
+(function(){
+    const producto = window.initialData.producto || {};
+
+    function cambiarImagenPrincipal(miniatura) {
+        const imagenPrincipal = document.getElementById('imagenPrincipal');
+        if (imagenPrincipal) imagenPrincipal.src = miniatura.src;
+        document.querySelectorAll('.miniatura-img').forEach(img => {
+            img.classList.remove('border-primary');
+            img.classList.add('border');
+        });
+        miniatura.classList.remove('border');
+        miniatura.classList.add('border-primary');
+    }
+
+    function comprarAhoraDetalle() {
+        const cantidad = parseInt(document.getElementById('cantidadProducto').value) || 1;
+        let carrito = JSON.parse(localStorage.getItem('carritoElixir')) || [];
+        const existe = carrito.find(item => item.id === producto.id);
+        if (existe) {
+            existe.cantidad = cantidad;
+        } else {
+            carrito.push({
+                id: producto.id, nombre: producto.nombre, precio: producto.precio,
+                categoria: producto.categoria, imagen: producto.imagen, cantidad
+            });
+        }
+        localStorage.setItem('carritoElixir', JSON.stringify(carrito));
+        if (typeof actualizarContadorCarrito === 'function') actualizarContadorCarrito();
+        window.location.href = '/checkout/';
+    }
+
+    function agregarAlCarritoDetalle() {
+        const cantidad = parseInt(document.getElementById('cantidadProducto').value) || 1;
+        if (typeof agregarAlCarrito === 'function') {
+            agregarAlCarrito({ id: producto.id, nombre: producto.nombre, precio: producto.precio, imagen: producto.imagen }, cantidad);
+            return;
+        }
+        let carrito = JSON.parse(localStorage.getItem('carritoElixir')) || [];
+        const existe = carrito.find(item => item.id === producto.id);
+        if (existe) existe.cantidad += cantidad;
+        else carrito.push({ id: producto.id, nombre: producto.nombre, precio: producto.precio, imagen: producto.imagen, cantidad });
+        localStorage.setItem('carritoElixir', JSON.stringify(carrito));
+        alert('¡Producto agregado al carrito!');
+    }
+
+    function cambiarCantidad(incremento) {
+        const input = document.getElementById('cantidadProducto');
+        let nuevaCantidad = parseInt(input.value) + incremento;
+        if (nuevaCantidad < 1) nuevaCantidad = 1;
+        if (producto.stock && nuevaCantidad > producto.stock) nuevaCantidad = producto.stock;
+        input.value = nuevaCantidad;
+        const total = (parseFloat(producto.precio) || 0) * nuevaCantidad;
+        const precioEl = document.getElementById('precioTotal');
+        if (precioEl) precioEl.textContent = `$${total.toLocaleString()}`;
+        const btnMenos = document.getElementById('btnMenos');
+        const btnMas = document.getElementById('btnMas');
+        if (btnMenos) btnMenos.disabled = nuevaCantidad === 1;
+        if (btnMas) btnMas.disabled = producto.stock && nuevaCantidad === producto.stock;
+    }
+
+    function agregarProductoRelacionado(idProducto) {
+        let carrito = JSON.parse(localStorage.getItem('carritoElixir')) || [];
+        const idNum = parseInt(idProducto,10) || idProducto;
+        const existe = carrito.find(i => i.id === idNum);
+        if (existe) existe.cantidad += 1;
+        else carrito.push({ id: idNum, nombre: 'Producto', precio: 0, cantidad: 1 });
+        localStorage.setItem('carritoElixir', JSON.stringify(carrito));
+        alert('Producto agregado al carrito');
+        if (typeof actualizarContadorCarrito === 'function') actualizarContadorCarrito();
+    }
+
+    function agregarAFavoritos(){ alert('¡Producto agregado a favoritos!'); }
+    function compartirProducto(){
+        if (navigator.clipboard) { navigator.clipboard.writeText(window.location.href); alert('¡Enlace copiado!'); }
+        else alert('Compartir: ' + window.location.href);
+    }
+    function ampliarImagen(img){
+        const modal = document.createElement('div');
+        modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:pointer;';
+        const imgA = document.createElement('img'); imgA.src = img.src; imgA.style.cssText='max-width:90%;max-height:90%;border-radius:10px;';
+        modal.appendChild(imgA); document.body.appendChild(modal); modal.onclick = ()=> modal.remove();
+    }
+    function quickView(id){ alert('Vista rápida próximamente: ' + id); }
+
+    document.addEventListener('DOMContentLoaded', function(){
+        cambiarCantidad(0);
+        const primera = document.querySelector('.miniatura-img');
+        if (primera){ primera.classList.remove('border'); primera.classList.add('border-primary'); }
+        // Exponer funciones globales que usan botones inline
+        window.cambiarImagenPrincipal = cambiarImagenPrincipal;
+        window.comprarAhoraDetalle = comprarAhoraDetalle;
+        window.agregarAlCarritoDetalle = agregarAlCarritoDetalle;
+        window.cambiarCantidad = cambiarCantidad;
+        window.agregarProductoRelacionado = agregarProductoRelacionado;
+        window.agregarAFavoritos = agregarAFavoritos;
+        window.compartirProducto = compartirProducto;
+        window.ampliarImagen = ampliarImagen;
+        window.quickView = quickView;
+    });
+})();
+</script>
+
+<style>
+.pulse{animation:pulse 2s infinite}
+@keyframes pulse{0%{opacity:1}50%{opacity:.5}100%{opacity:1}}
+.producto-card{transition:all .3s ease}
+.producto-card:hover{transform:translateY(-5px);box-shadow:0 8px 25px rgba(0,0,0,.15)}
+.btn{transition:all .3s ease}
+.btn:hover{transform:translateY(-1px)}
+.card{border:none;box-shadow:0 2px 15px rgba(0,0,0,.08)}
+.miniatura-img{transition:all .3s ease}
+.miniatura-img:hover{opacity:.8;transform:scale(1.05)}
+</style>
+{% endblock %}
